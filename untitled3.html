@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bumerangues com Controle de Direção</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            margin: 0;
+            overflow: hidden; /* Evitar rolagem */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Ajustar o tamanho do canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Lista de bumerangues
+        const boomerangs = [];
+
+        let cursorX = canvas.width / 2;
+        let cursorY = canvas.height / 2;
+        let lastCursorX = cursorX;
+        let lastCursorY = cursorY;
+        let isDragging = false;
+
+        // Cores aleatórias
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Criar um novo bumerangue
+        function createBoomerang(x, y) {
+            return {
+                x: x,
+                y: y,
+                size: 200,
+                rotation: 20,
+                spinSpeed: Math.random() * 0.3 + 0.1, // Velocidade de rotação
+                velocityX: 10,
+                velocityY: 10,
+                inMotion: false,
+                color: getRandomColor(),
+            };
+        }
+
+        // Atualiza a posição do cursor enquanto o mouse é movido
+        canvas.addEventListener('mousemove', function(e) {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+
+            // Se estiver arrastando, seguir o cursor com o bumerangue
+            if (isDragging && boomerangs.length > 0) {
+                const boomerang = boomerangs[boomerangs.length - 1];
+                boomerang.x = cursorX;
+                boomerang.y = cursorY;
+            }
+        });
+
+        // Detecta quando o mouse está sendo pressionado para iniciar o arraste
+        canvas.addEventListener('mousedown', function() {
+            lastCursorX = cursorX;
+            lastCursorY = cursorY;
+            const newBoomerang = createBoomerang(cursorX, cursorY);
+            boomerangs.push(newBoomerang);
+            isDragging = true;
+        });
+
+        // Detecta quando o clique é liberado para lançar o bumerangue
+        canvas.addEventListener('mouseup', function() {
+            if (isDragging && boomerangs.length > 0) {
+                isDragging = false;
+                const boomerang = boomerangs[boomerangs.length - 1];
+
+                // Calcular a velocidade com base no movimento do mouse
+                boomerang.velocityX = (cursorX - lastCursorX) * 0.2;
+                boomerang.velocityY = (cursorY - lastCursorY) * 0.2;
+
+                boomerang.inMotion = true;
+            }
+        });
+
+        // Função para desenhar um bumerangue
+        function drawBoomerang(boomerang) {
+            ctx.save();
+            ctx.translate(boomerang.x, boomerang.y);
+            ctx.rotate(boomerang.rotation);
+            ctx.fillStyle = boomerang.color;
+            ctx.beginPath();
+            ctx.moveTo(-boomerang.size / 2, -boomerang.size / 4);
+            ctx.lineTo(boomerang.size / 2, -boomerang.size / 4);
+            ctx.lineTo(0, boomerang.size / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Função para animar o movimento dos bumerangues
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            boomerangs.forEach(boomerang => {
+                // Girar o bumerangue
+                boomerang.rotation += boomerang.spinSpeed;
+
+
+                // Se o bumerangue estiver em movimento, mover na direção
+                if (boomerang.inMotion) {
+                    boomerang.x += boomerang.velocityX;
+                    boomerang.y += boomerang.velocityY;
+
+                    // Efeito de teletransporte ao passar pelas bordas
+                    if (boomerang.x > canvas.width + boomerang.size) {
+                        boomerang.x = -boomerang.size;
+                    } else if (boomerang.x < -boomerang.size) {
+                        boomerang.x = canvas.width + boomerang.size;
+                    }
+
+                    if (boomerang.y > canvas.height + boomerang.size) {
+                        boomerang.y = -boomerang.size;
+                    } else if (boomerang.y < -boomerang.size) {
+                        boomerang.y = canvas.height + boomerang.size;
+                    }
+                }
+
+                drawBoomerang(boomerang); // Desenhar o bumerangue
+            });
+
+            requestAnimationFrame(animate); // Continuar a animação
+        }
+
+        // Iniciar a animação
+        animate();
+
+        // Ajustar o tamanho do canvas ao redimensionar a janela
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
