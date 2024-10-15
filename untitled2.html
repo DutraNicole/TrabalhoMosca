@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bumerangue com Controle de Direção</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            margin: 0;
+            overflow: hidden; /* Evitar rolagem */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Ajustar o tamanho do canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Propriedades do bumerangue
+        const boomerang = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 40,
+            rotation: 0,
+            spinSpeed: 1, // Velocidade de rotação
+            velocityX: 10,
+            velocityY: 10,
+            inMotion: false,
+            isDragging: false
+        };
+
+        let cursorX = canvas.width / 2;
+        let cursorY = canvas.height / 2;
+        let lastCursorX = cursorX;
+        let lastCursorY = cursorY;
+
+        // Atualiza a posição do cursor enquanto o mouse é movido
+        canvas.addEventListener('mousemove', function(e) {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+
+            // Se o bumerangue está sendo arrastado, seguir o cursor
+            if (boomerang.isDragging) {
+                boomerang.x = cursorX;
+                boomerang.y = cursorY;
+            }
+        });
+
+        // Detecta quando o mouse está sendo pressionado para iniciar o arraste
+        canvas.addEventListener('mousedown', function() {
+            boomerang.isDragging = true;
+            boomerang.inMotion = false;
+            lastCursorX = cursorX;
+            lastCursorY = cursorY;
+        });
+
+        // Detecta quando o clique é liberado para lançar o bumerangue
+        canvas.addEventListener('mouseup', function() {
+            if (boomerang.isDragging) {
+                boomerang.isDragging = false;
+
+                // Calcular a velocidade com base na diferença de movimento do mouse
+                boomerang.velocityX = (cursorX - lastCursorX) * 0.2; // Controla a velocidade de lançamento
+                boomerang.velocityY = (cursorY - lastCursorY) * 0.2;
+
+                boomerang.inMotion = true;
+            }
+        });
+
+        // Função para desenhar o bumerangue
+        function drawBoomerang() {
+            ctx.save();
+            ctx.translate(boomerang.x, boomerang.y);
+            ctx.rotate(boomerang.rotation);
+            ctx.fillStyle = '#0095DD';
+            ctx.beginPath();
+            ctx.moveTo(-boomerang.size / 2, -boomerang.size / 4);
+            ctx.lineTo(boomerang.size / 2, -boomerang.size / 4);
+            ctx.lineTo(0, boomerang.size / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Função para animar o movimento do bumerangue
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Girar o bumerangue
+            boomerang.rotation += boomerang.spinSpeed;
+
+            // Se o bumerangue estiver em movimento, mover na direção
+            if (boomerang.inMotion) {
+                boomerang.x += boomerang.velocityX;
+                boomerang.y += boomerang.velocityY;
+
+                // Lógica para o efeito de teletransporte ao passar pelas bordas
+                if (boomerang.x > canvas.width + boomerang.size) {
+                    boomerang.x = -boomerang.size; // Saiu pela direita, aparece à esquerda
+                } else if (boomerang.x < -boomerang.size) {
+                    boomerang.x = canvas.width + boomerang.size; // Saiu pela esquerda, aparece à direita
+                }
+
+                if (boomerang.y > canvas.height + boomerang.size) {
+                    boomerang.y = -boomerang.size; // Saiu por baixo, aparece no topo
+                } else if (boomerang.y < -boomerang.size) {
+                    boomerang.y = canvas.height + boomerang.size; // Saiu pelo topo, aparece embaixo
+                }
+            }
+
+            drawBoomerang(); // Desenhar o bumerangue
+
+            // Chamar a função de animação repetidamente
+            requestAnimationFrame(animate);
+        }
+
+        // Iniciar a animação
+        animate();
+
+        // Ajustar o tamanho do canvas ao redimensionar a janela
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
